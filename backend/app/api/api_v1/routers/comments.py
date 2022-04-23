@@ -2,31 +2,32 @@ from fastapi import APIRouter, Request, Depends, Response, encoders
 import typing as t
 
 from app.db.session import get_db
+from app.core.reddit import create_comments_via_praw
 from app.db.crud.comment import (
     get_comments,
     get_comment,
-    create_comment,
     delete_comment,
     edit_comment,
 )
-from app.db.schemas.comment import CommentCreate, Comment
+from app.db.schemas.comment import CommentCreate, Comment, GetComments, CommentOut
 
 comments_router = r = APIRouter()
 
 
-@r.get(
-    "/comments",
+@r.post(
+    "/comments/",
     response_model=t.List[Comment],
     response_model_exclude_none=True,
 )
 async def comments_list(
     response: Response,
+    body: GetComments,
     db=Depends(get_db),
 ):
     """
     Get all comments
     """
-    comments = get_comments(db)
+    comments = get_comments(db, body.offset, body.limit)
     # This is necessary for react-admin to work
     response.headers["Content-Range"] = f"0-9/{len(comments)}"
     return comments
@@ -51,16 +52,15 @@ async def comment_details(
     # )
 
 
-@r.post("/comments", response_model=Comment, response_model_exclude_none=True)
+@r.post("/create_comments/", response_model=CommentOut, response_model_exclude_none=True)
 async def comment_create(
     request: Request,
-    comment: CommentCreate,
     db=Depends(get_db),
 ):
     """
     Create a new comment
     """
-    return create_comment(db, comment)
+    return create_comments_via_praw(db)
 
 
 @r.put(

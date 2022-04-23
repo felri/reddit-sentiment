@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Request, Depends, Response, encoders
+from fastapi import  Request, Depends, Response, encoders
 import typing as t
 
 from app.db.session import get_db
+from app.core.reddit import create_threads_via_praw
 from app.db.crud.thread import (
     get_threads,
     get_thread,
@@ -10,8 +11,9 @@ from app.db.crud.thread import (
     edit_thread,
 )
 from app.db.schemas.thread import ThreadCreate, Thread
+from .. import api_router
 
-threads_router = r = APIRouter()
+threads_router = r = api_router.APIRouter()
 
 
 @r.get(
@@ -50,17 +52,16 @@ async def thread_details(
     #     thread, skip_defaults=True, exclude_none=True,
     # )
 
-
-@r.post("/threads", response_model=Thread, response_model_exclude_none=True)
-async def thread_create(
+@r.post("/threads/{subreddit_name}", response_model=t.List[Thread], response_model_exclude_none=True)
+async def subreddit_create(
     request: Request,
-    thread: ThreadCreate,
+    subreddit_name: str,
     db=Depends(get_db),
 ):
     """
-    Create a new thread
+    Create a new subreddit
     """
-    return create_thread(db, thread)
+    return create_threads_via_praw(db, subreddit_name)
 
 
 @r.put(

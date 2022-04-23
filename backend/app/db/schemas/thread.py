@@ -12,6 +12,7 @@ class ThreadBase(BaseModel):
     permalink: str
     prediction: int
     subreddit_id: int
+    author: str = None
 
 
 class ThreadCreate(ThreadBase):

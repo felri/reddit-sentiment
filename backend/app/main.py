@@ -6,6 +6,7 @@ from app.api.api_v1.routers.users import users_router
 from app.api.api_v1.routers.threads import threads_router
 from app.api.api_v1.routers.subreddits import subreddits_router
 from app.api.api_v1.routers.comments import comments_router
+from app.api.api_v1.routers.charts import charts_router
 from app.api.api_v1.routers.auth import auth_router
 from app.core import config
 from app.db.session import SessionLocal
@@ -50,6 +51,7 @@ app.include_router(auth_router, prefix="/api", tags=["auth"])
 app.include_router(subreddits_router, prefix="/api/v1", tags=["subreddits"])
 app.include_router(threads_router, prefix="/api/v1", tags=["threads"])
 app.include_router(comments_router, prefix="/api/v1", tags=["comments"])
+app.include_router(charts_router, prefix="/api/v1", tags=["charts"])
 
 
 if __name__ == "__main__":

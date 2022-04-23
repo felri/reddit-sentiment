@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from  sqlalchemy.sql.expression import func
 import typing as t
 
 from .. import models
@@ -19,26 +20,34 @@ def get_comment_by_permalink(db: Session, permalink: str) -> Comment:
 
 
 def get_comments(
-    db: Session, skip: int = 0, limit: int = 100
+    db: Session, offset, limit
 ) -> t.List[Comment]:
-    return db.query(models.Comment).offset(skip).limit(limit).all()
+    return db.query(models.Comment).order_by(func.random()).offset(offset).limit(limit).all()
+
+
+def check_comment_exists(db: Session, permalink: str) -> bool:
+    return db.query(models.Comment).filter(models.Comment.permalink == permalink).first() is not None
 
 
 def create_comment(db: Session, comment: CommentCreate):
-    db_comment = models.Comment(
-        body=comment.body,
-        author=comment.author,
-        created=comment.created,
-        score=comment.score,
-        permalink=comment.permalink,
-        url=comment.url,
-        prediction=comment.prediction,
-        thread_id=comment.thread_id,
-    )
-    db.add(db_comment)
-    db.commit()
-    db.refresh(db_comment)
-    return db_comment
+    if check_comment_exists(db, comment.permalink):
+        return None
+    try:
+        db_comment = models.Comment(
+            permalink=comment.permalink,
+            author_id=comment.author_id,
+            thread_id=comment.thread_id,
+            body=comment.body,
+            created_at=comment.created_at,
+            updated_at=comment.updated_at,
+        )
+        db.add(db_comment)
+        db.commit()
+        db.refresh(db_comment)
+        return db_comment
+    except Exception as e:
+        print(e)
+        return None
 
 
 def delete_comment(db: Session, comment_id: int):

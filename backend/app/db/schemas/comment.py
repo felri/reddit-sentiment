@@ -4,19 +4,28 @@ import typing as t
 
 class CommentBase(BaseModel):
     body: str
-    author: str
+    author: str = None
     created: str
     score: str
     permalink: str
-    url: str
+    url: str = None
     prediction: str
     thread_id: int
     prediction: int
 
 
+class GetComments(BaseModel):
+    offset: int
+    limit: int
+
+
 class CommentCreate(CommentBase):
     class Config:
         orm_mode = True
+
+
+class CommentOut(BaseModel):
+    pass
 
 
 class Comment(CommentBase):

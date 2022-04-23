@@ -22,7 +22,7 @@ class Redditor(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     comment_karma = Column(Integer)
-    
+
 
 class Thread(Base):
     __tablename__ = "thread"
@@ -51,7 +51,7 @@ class Comment(Base):
     created = Column(String)
     score = Column(String)
     permalink = Column(String, unique=True,  nullable=False, index=True)
-    url = Column(String, unique=True,  nullable=False)
+    url = Column(String)
     prediction = Column(Integer)
     thread_id = Column(Integer, ForeignKey('thread.id'))
 
@@ -61,8 +61,26 @@ class Subreddit(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True,  nullable=False)
-    display_name = Column(String)
+    display_name = Column(String, unique=True, index=True)
     created = Column(String)
     public_description = Column(Integer)
     subscribers = Column(Integer)
     children = relationship("Thread")
+
+class Ticket(Base):
+    __tablename__ = "ticket"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticket = Column(String, unique=True,  nullable=False)
+
+class Chart(Base):
+    __tablename__ = "chart"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticket_id = Column(Integer, ForeignKey('ticket.id'))
+    open = Column(Integer)
+    high = Column(Integer)
+    low = Column(Integer)
+    close = Column(Integer)
+    volume = Column(Integer)
+    date = Column(String)

@@ -16,7 +16,7 @@ def get_subreddit(db: Session, subreddit_id: int):
 
 
 def get_subreddit_by_name(db: Session, subreddit_name: str) -> Subreddit:
-    return db.query(models.Subreddit).filter(models.Subreddit.name == subreddit_name).first()
+    return db.query(models.Subreddit).filter(models.Subreddit.display_name == subreddit_name.lower()).first()
 
 
 def get_subreddits(
@@ -25,14 +25,17 @@ def get_subreddits(
     return db.query(models.Subreddit).offset(skip).limit(limit).all()
 
 
+def check_subreddit_exists(db: Session, subreddit_name: str) -> bool:
+    return db.query(models.Subreddit).filter(models.Subreddit.display_name == subreddit_name.lower()).first() is not None
+
+
 def create_subreddit(db: Session, subreddit: SubredditCreate):
-    db_subreddit = models.Subreddit(
-        name=subreddit.name,
-        display_name=subreddit.display_name,
-        created=subreddit.created,
-        public_description=subreddit.public_description,
-        subscribers=subreddit.subscribers,
-    )
+    if check_subreddit_exists(db, subreddit.display_name):
+        raise HTTPException(status.HTTP_409_CONFLICT,
+                            detail="Subreddit already exists")
+
+    db_subreddit = models.Subreddit(**subreddit.dict())
+
     db.add(db_subreddit)
     db.commit()
     db.refresh(db_subreddit)

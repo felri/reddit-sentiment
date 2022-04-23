@@ -37,8 +37,8 @@ def upgrade():
     op.create_table(
         "subreddit",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("name", sa.String),
-        sa.Column("display_name", sa.String),
+        sa.Column("name", sa.String, unique=True),
+        sa.Column("display_name", sa.String, unique=True),
         sa.Column("created", sa.String),
         sa.Column("public_description", sa.String),
         sa.Column("subscribers", sa.Integer),
@@ -66,10 +66,10 @@ def upgrade():
         sa.Column("author", sa.String),
         sa.Column("created", sa.String),
         sa.Column("score", sa.String),
-        sa.Column("permalink", sa.Integer, unique=True,
+        sa.Column("permalink", sa.String, unique=True,
                   nullable=False, index=True),
-        sa.Column("url", sa.String, unique=True,  nullable=False),
-        sa.Column("prediction", sa.String),
+        sa.Column("url", sa.String),
+        sa.Column("prediction", sa.Integer),
         sa.Column("thread_id", sa.Integer, sa.ForeignKey('thread.id')),
     )
 

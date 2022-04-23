@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Request, Depends, Response, encoders
+from tokenize import String
+from fastapi import Request, Depends, Response, encoders
 import typing as t
 
 from app.db.session import get_db
+from app.core.reddit import create_subreddit_via_praw
 from app.db.crud.subreddit import (
     get_subreddits,
     get_subreddit,
@@ -10,9 +12,9 @@ from app.db.crud.subreddit import (
     edit_subreddit,
 )
 from app.db.schemas.subreddit import SubredditCreate, Subreddit
+from .. import api_router
 
-subreddits_router = r = APIRouter()
-
+subreddits_router = r = api_router.APIRouter()
 
 @r.get(
     "/subreddits",
@@ -47,21 +49,18 @@ async def subreddit_details(
     """
     subreddit = get_subreddit(db, subreddit_id)
     return subreddit
-    # return encoders.jsonable_encoder(
-    #     subreddit, skip_defaults=True, exclude_none=True,
-    # )
 
 
-@r.post("/subreddits", response_model=Subreddit, response_model_exclude_none=True)
+@r.post("/subreddit/{subreddit_name}", response_model=Subreddit, response_model_exclude_none=True)
 async def subreddit_create(
     request: Request,
-    subreddit: SubredditCreate,
+    subreddit_name: str,
     db=Depends(get_db),
 ):
     """
     Create a new subreddit
     """
-    return create_subreddit(db, subreddit)
+    return create_subreddit_via_praw(db, subreddit_name)
 
 
 @r.put(

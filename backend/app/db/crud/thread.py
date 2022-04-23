@@ -25,20 +25,15 @@ def get_threads(
     return db.query(models.Thread).offset(skip).limit(limit).all()
 
 
+def check_thread_exists_by_permalink(db: Session, thread_permalink: int):
+    return db.query(models.Thread).filter(models.Thread.permalink == thread_permalink).first()
+
+
 def create_thread(db: Session, thread: ThreadCreate):
-    db_thread = models.Thread(
-        title=thread.title,
-        url=thread.url,
-        author=thread.author,
-        created=thread.created,
-        num_comments=thread.num_comments,
-        score=thread.score,
-        permalink=thread.permalink,
-        selftext=thread.selftext,
-        body=thread.body,
-        prediction=thread.prediction,
-        subreddit_id=thread.subreddit_id,
-    )
+    if(check_thread_exists_by_permalink(db, thread.permalink)):
+        return None
+
+    db_thread = models.Thread(**thread.dict())
     db.add(db_thread)
     db.commit()
     db.refresh(db_thread)
@@ -77,3 +72,9 @@ def get_thread_comments(
     db: Session, thread_id: int, skip: int = 0, limit: int = 100
 ) -> t.List[Comment]:
     return db.query(models.Comment).filter(models.Comment.thread_id == thread_id).offset(skip).limit(limit).all()
+
+
+def get_comments_by_thread_id(
+    db: Session, thread_id: int
+) -> t.List[Comment]:
+    return db.query(models.Comment).filter(models.Comment.thread_id == thread_id).all()

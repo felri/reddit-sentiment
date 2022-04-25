@@ -4,6 +4,7 @@ import praw
 from fastapi import HTTPException, status
 from prawcore import NotFound
 
+import app.db.models as models
 import app.db.crud.comment as comment_crud
 import app.db.crud.thread as thread_crud
 import app.db.crud.subreddit as subreddit_crud
@@ -46,7 +47,7 @@ def create_subreddit_via_praw(db, subreddit):
                             detail="Subreddit not found")
 
 
-def create_threads_via_praw(db, subreddit, flair='flair:"Daily+Discussion"', limit=100):
+def create_threads_via_praw(db, subreddit, flair='flair:"Daily+Discussion"', limit=10000):
     reddit = get_reddit()
     if(sub_exists(subreddit, reddit)):
         sub = subreddit_crud.get_subreddit_by_name(db, subreddit)
@@ -80,7 +81,7 @@ def create_threads_via_praw(db, subreddit, flair='flair:"Daily+Discussion"', lim
 
 
 def clean_text(text):
-    return remove_urls(remove_parentheses(remove_brakets(text)))
+    return remove_parentheses(remove_brakets(remove_urls(text)))
 
 
 def remove_parentheses(text):
@@ -110,6 +111,16 @@ def check_comment_validity(comment):
         return False
 
 
+def get_author_name(comment):
+    if(hasattr(comment, 'author')):
+        if(comment.author is not None):
+            return comment.author.name
+        else:
+            return 'Anonymous'
+    else:
+        return None
+
+
 def create_comments_via_praw(db):
     reddit = get_reddit()
 
@@ -118,11 +129,11 @@ def create_comments_via_praw(db):
     for thread in threads:
         print(thread.permalink)
         thread_instance = reddit.submission(
-            url='https://old.reddit.com' + thread.permalink)
+            url='https://reddit.com' + thread.permalink)
         if not check_thread_has_comments(db, thread):
             for comment in list(thread_instance.comments):
                 if (check_comment_validity(comment)):
-                    aux = comment_crud.create_comment(db, CommentCreate(
+                    aux = comment_crud.create_comment(db, models.Comment(
                         body=clean_text(comment.body),
                         score=comment.score,
                         created=comment.created_utc,
@@ -130,6 +141,7 @@ def create_comments_via_praw(db):
                         thread_id=thread.id,
                         url=thread.url,
                         prediction=0,
+                        author=get_author_name(comment),
                     ))
                     if(aux is not None):
                         print('Comment created for thread: ' + thread.title)

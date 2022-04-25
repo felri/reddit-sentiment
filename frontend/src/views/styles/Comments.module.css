@@ -1,0 +1,39 @@
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  margin: auto;
+  padding-bottom: 40px;
+  text-align: center;
+  flex: 4
+}
+
+.buttons {
+  position: fixed;
+  left: 10%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.carouselContainer {
+  flex: 1;
+  padding-top: 30px;
+}
+
+.dateText {
+  font-size: 30px;
+}
+
+.commentBody {
+  font-size: 18px;
+}

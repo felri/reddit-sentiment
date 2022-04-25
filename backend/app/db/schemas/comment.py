@@ -9,7 +9,6 @@ class CommentBase(BaseModel):
     score: str
     permalink: str
     url: str = None
-    prediction: str
     thread_id: int
     prediction: int
 

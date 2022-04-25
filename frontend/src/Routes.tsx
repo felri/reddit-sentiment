@@ -1,54 +1,36 @@
-import React, { FC } from 'react';
-import { Switch, Route } from 'react-router-dom';
-import { useHistory } from 'react-router';
-import { makeStyles } from '@material-ui/core/styles';
+import React, { FC, useEffect } from "react";
+import { Routes as Switch, Route, useNavigate } from "react-router-dom";
 
-import { Home, Login, SignUp, Protected, PrivateRoute } from './views';
-import { Admin } from './admin';
-import { logout } from './utils/auth';
+import { Home, Login, SignUp, Protected } from "./views";
+import { Admin } from "./admin";
+import { logout, isAuthenticated } from "./utils/auth";
 
-const useStyles = makeStyles((theme) => ({
-  app: {
-    textAlign: 'center',
-  },
-  header: {
-    backgroundColor: '#282c34',
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 'calc(10px + 2vmin)',
-    color: 'white',
-  },
-}));
+const Logout: FC = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    logout();
+    navigate("/");
+  }, []);
+  return null;
+};
 
 export const Routes: FC = () => {
-  const classes = useStyles();
-  const history = useHistory();
-
   return (
     <Switch>
-      <Route path="/admin">
-        <Admin />
-      </Route>
-
-      <div className={classes.app}>
-        <header className={classes.header}>
-          <Route path="/login" component={Login} />
-          <Route path="/signup" component={SignUp} />
-          <Route
-            path="/logout"
-            render={() => {
-              logout();
-              history.push('/');
-              return null;
-            }}
-          />
-          <PrivateRoute path="/protected" component={Protected} />
-          <Route exact path="/" component={Home} />
-        </header>
-      </div>
+      <Route path="/" element={<Home />} />
+      {isAuthenticated() ? (
+        <>
+          <Route path="/logout" element={<Logout />} />
+          <Route path="/protected" element={<Protected />} />
+          <Route path="/admin" element={<Admin />} />
+        </>
+      ) : (
+        <>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+        </>
+      )}
+      <Route path="*" element={<div>404</div>} />
     </Switch>
   );
 };

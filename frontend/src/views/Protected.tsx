@@ -1,16 +1,11 @@
-import React, { FC } from 'react';
-import { Comment } from '../utils/types';
-import styles from './styles/Comments.module.css';
-import 'react-responsive-carousel/lib/styles/carousel.min.css'; // requires a loader
-import { Carousel } from 'react-responsive-carousel';
-import { useEventListener } from '../utils/hooks';
-import { Button } from '../components/Button';
-import { CandleChart } from '../components/CandleChart';
-
-type DataChart = {
-  series?: [any];
-  linear?: [any];
-};
+import React, { FC, useMemo } from "react";
+import { Comment, DataChart } from "../utils/types";
+import styles from "./styles/Comments.module.css";
+import "react-responsive-carousel/lib/styles/carousel.min.css"; // requires a loader
+import { Carousel } from "react-responsive-carousel";
+import { useEventListener } from "../utils/hooks";
+import { Button } from "../components/Button";
+import { CandleChart } from "../components/CandleChart";
 
 type Props = {
   pressedButton: string;
@@ -22,88 +17,90 @@ const Buttons: FC<any> = ({ pressedButton }: Props) => {
       <Button
         pressedButton={pressedButton}
         predictionNumber={1}
-        button={'bearish'}
+        button={"bearish"}
       />
       <Button
         pressedButton={pressedButton}
         predictionNumber={2}
-        button={'kinda bearish'}
+        button={"neutral"}
       />
       <Button
         pressedButton={pressedButton}
         predictionNumber={3}
-        button={'neutral'}
+        button={"bullish"}
       />
       <Button
         pressedButton={pressedButton}
         predictionNumber={4}
-        button={'kinda bullish'}
-      />
-      <Button
-        pressedButton={pressedButton}
-        predictionNumber={5}
-        button={'bullish'}
-      />
-      <Button
-        pressedButton={pressedButton}
-        predictionNumber={0}
-        button={'delete'}
+        button={"delete"}
       />
     </div>
   );
 };
 
 export const Protected: FC = () => {
-  const [comments, setComments] = React.useState<Array<Comment | null>>([]);
+  const [comments, setComments] = React.useState<Array<Comment>>([]);
   const [dataChart, setDataChart] = React.useState<DataChart | null>();
   const [currentSlide, setCurrentSlide] = React.useState<number>(0);
   const [keyboardBeingPressed, setKeyboardBeingPressed] =
-    React.useState<string>('');
+    React.useState<string>("");
   const [loading, setLoading] = React.useState<boolean>(true);
+  const [loadingChart, setLoadingChart] = React.useState<boolean>(true);
 
   const fetchChartByTicket = async (ticketId: number) => {
     try {
-      const response = await fetch('/api/v1/charts/' + ticketId, {
-        method: 'GET',
+      const response = await fetch("/api/v1/charts/" + ticketId, {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
       let data = await response.json();
       data = modifyChartData(data);
       setDataChart(data);
-      setLoading(false);
+      setLoadingChart(false);
     } catch (error) {
       console.log(error);
     }
   };
 
+  const noDecimals = (number: number) => {
+    return Math.round(number * 100) / 100;
+  };
+
   const modifyChartData = (data: Array<any>) => {
-    const newData = (data || []).map((item: any) => {
+    const series = data.map((item: any) => {
       return {
-        series: {
-          x: item.date,
-          y: [item.open, item.high, item.low, item.close],
-        },
-        linear: {
-          x: item.date,
-          y: item.volume,
-        },
+        x: item.date.substring(0, item.date.length - 9),
+        y: [
+          noDecimals(item.open),
+          noDecimals(item.high),
+          noDecimals(item.low),
+          noDecimals(item.close),
+        ],
       };
     });
-    return newData;
+
+    const linear = data.map((item: any) => {
+      return {
+        x: item.date.substring(0, item.date.length - 9),
+        y: noDecimals(item.volume),
+      };
+    });
+
+    return { series, linear };
   };
 
   const fetchComments = async () => {
     try {
       const offset = comments.length;
-      const limit = 10;
-      const response = await fetch('/api/v1/comments/', {
-        method: 'POST',
+      const limit = 100;
+      const response = await fetch("/api/v1/comments/", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           offset,
@@ -119,12 +116,12 @@ export const Protected: FC = () => {
   };
 
   const unixToDate = (unix: string | undefined) => {
-    if (!unix) return null;
+    if (!unix) return new Date().toString();
     const date = new Date(Number(unix) * 1000);
     const day = date.getDate();
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${year}-${month}-${day}`;
   };
 
   const updatePredictionComment = async (
@@ -133,11 +130,11 @@ export const Protected: FC = () => {
   ) => {
     try {
       const body = { ...comment, prediction };
-      const response = await fetch('/api/v1/comments/' + comment?.id, {
-        method: 'PUT',
+      const response = await fetch("/api/v1/comments/" + comment?.id, {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify(body),
       });
@@ -160,10 +157,10 @@ export const Protected: FC = () => {
     if (!id) return;
     try {
       await fetch(`/api/v1/comments/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
       setComments(comments.filter((comment) => comment?.id !== id));
@@ -175,19 +172,19 @@ export const Protected: FC = () => {
   const listenKeyboardDown = (e: KeyboardEvent) => {
     setKeyboardBeingPressed(e.key);
     setTimeout(() => {
-      setKeyboardBeingPressed('');
+      setKeyboardBeingPressed("");
     }, 200);
 
-    if (e.key === 'ArrowLeft') setCurrentSlide((f) => f - 1);
-    if (e.key === 'ArrowRight') setCurrentSlide((f) => f + 1);
+    if (e.key === "ArrowLeft") setCurrentSlide((f) => f - 1);
+    if (e.key === "ArrowRight") setCurrentSlide((f) => f + 1);
 
-    if (e.key === 'd') deleteComment(comments[currentSlide]?.id);
+    if (e.key === "d") deleteComment(comments[currentSlide]?.id);
     if (
-      e.key === '1' ||
-      e.key === '2' ||
-      e.key === '3' ||
-      e.key === '4' ||
-      e.key === '5'
+      e.key === "1" ||
+      e.key === "2" ||
+      e.key === "3" ||
+      e.key === "4" ||
+      e.key === "5"
     ) {
       updatePredictionComment(Number(e.key), comments[currentSlide]);
     }
@@ -195,6 +192,18 @@ export const Protected: FC = () => {
 
   const handleSwipe = (i: number) => {
     setCurrentSlide(i);
+  };
+
+  const selectedCommentDate = useMemo(() => {
+    if (comments[currentSlide]) {
+      return unixToDate(comments[currentSlide].created);
+    }
+    return null;
+  }, [comments, currentSlide]);
+
+  const getMoreComments = () => {
+    setLoading(true);
+    fetchComments();
   };
 
   React.useEffect(() => {
@@ -210,33 +219,46 @@ export const Protected: FC = () => {
     fetchChartByTicket(1);
   }, []);
 
-  useEventListener('keydown', listenKeyboardDown);
+  useEventListener("keydown", listenKeyboardDown);
 
   return (
     <div className={styles.container}>
       {loading ? (
         <div>Loading...</div>
       ) : (
-        <Carousel
-          selectedItem={currentSlide}
-          showStatus={false}
-          showIndicators={false}
-          onChange={handleSwipe}
+        <div
+          className={styles.carouselContainer}
+          style={{ flex: 4, minHeight: "50vh" }}
         >
-          {comments.map((comment, index) => (
-            <div key={`${comment?.id}${index}`} className={styles.card}>
-              <h3>{unixToDate(comment?.created)}</h3>
-              <div>{comment?.body}</div>
-              <div>score: {comment?.score}</div>
+          <Carousel
+            selectedItem={currentSlide}
+            showStatus={false}
+            showIndicators={false}
+            onChange={handleSwipe}
+          >
+            {comments.map((comment, index) => (
+              <div key={`${comment?.id}${index}`} className={styles.card}>
+                <div className={styles.author}>{comment?.author}</div>
+                <div className={styles.commentBody}>{comment?.body}</div>
+                <h3 className={styles.dateText}>
+                  {unixToDate(comment?.created)}
+                </h3>
+                <div className={styles.score}>score: {comment?.score}</div>
+              </div>
+            ))}
+          </Carousel>
+          {loadingChart ? (
+            <div>Loading...</div>
+          ) : (
+            <div style={{ flex: 1 }}>
+              <CandleChart
+                dataChart={dataChart}
+                loading={loadingChart}
+                commentDate={selectedCommentDate}
+              />
             </div>
-          ))}
-        </Carousel>
-      )}
-      {dataChart?.series && dataChart?.linear && (
-        <CandleChart
-          seriesData={dataChart.series}
-          seriesDataLinear={dataChart.linear}
-        />
+          )}
+        </div>
       )}
       <Buttons pressedButton={keyboardBeingPressed}></Buttons>
     </div>

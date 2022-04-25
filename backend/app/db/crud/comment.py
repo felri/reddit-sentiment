@@ -29,22 +29,14 @@ def check_comment_exists(db: Session, permalink: str) -> bool:
     return db.query(models.Comment).filter(models.Comment.permalink == permalink).first() is not None
 
 
-def create_comment(db: Session, comment: CommentCreate):
+def create_comment(db: Session, comment: models.Comment):
     if check_comment_exists(db, comment.permalink):
         return None
     try:
-        db_comment = models.Comment(
-            permalink=comment.permalink,
-            author_id=comment.author_id,
-            thread_id=comment.thread_id,
-            body=comment.body,
-            created_at=comment.created_at,
-            updated_at=comment.updated_at,
-        )
-        db.add(db_comment)
+        db.add(comment)
         db.commit()
-        db.refresh(db_comment)
-        return db_comment
+        db.refresh(comment)
+        return comment
     except Exception as e:
         print(e)
         return None
@@ -85,6 +77,6 @@ def get_comment_by_thread(
 
 
 def get_comment_by_author(
-    db: Session, author_id: int
+    db: Session, author: str
 ) -> t.List[Comment]:
-    return db.query(models.Comment).filter(models.Comment.author_id == author_id).all()
+    return db.query(models.Comment).filter(models.Comment.author == author).all()
